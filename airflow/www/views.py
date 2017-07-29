@@ -23,6 +23,7 @@ from functools import wraps
 from datetime import datetime, timedelta
 import dateutil.parser
 import copy
+import math
 import json
 import bleach
 from collections import defaultdict
@@ -226,9 +227,7 @@ attr_renderer = {
 
 
 def data_profiling_required(f):
-    '''
-    Decorator for views requiring data profiling access
-    '''
+    """Decorator for views requiring data profiling access"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if (
@@ -284,6 +283,7 @@ def get_chart_height(dag):
     """
     return 600 + len(dag.tasks) * 10
 
+
 class Airflow(BaseView):
 
     def is_visible(self):
@@ -311,9 +311,10 @@ class Airflow(BaseView):
         session.commit()
         session.close()
 
-        payload = {}
-        payload['state'] = 'ERROR'
-        payload['error'] = ''
+        payload = {
+            "state": "ERROR",
+            "error": ""
+        }
 
         # Processing templated fields
         try:
@@ -1872,7 +1873,6 @@ class HomeView(AdminIndexView):
     def index(self):
         session = Session()
         DM = models.DagModel
-        qry = None
 
         # restrict the dags shown if filter_by_owner and current user is not superuser
         do_filter = FILTER_BY_OWNER and (not current_user.is_superuser())
@@ -1881,6 +1881,18 @@ class HomeView(AdminIndexView):
         hide_paused_dags_by_default = conf.getboolean('webserver',
                                                       'hide_paused_dags_by_default')
         show_paused_arg = request.args.get('showPaused', 'None')
+
+        def get_int_arg(value, default=0):
+            try:
+                return int(value)
+            except ValueError:
+                return default
+
+        arg_page_size = request.args.get('page_size', '25')
+        arg_current_page = request.args.get('page', '1')
+
+        current_page = get_int_arg(arg_current_page, default=1)
+        dags_per_page = get_int_arg(arg_page_size, default=25)
         if show_paused_arg.strip().lower() == 'false':
             hide_paused = True
 
@@ -1956,13 +1968,26 @@ class HomeView(AdminIndexView):
                 for dag in unfiltered_webserver_dags
             }
 
-        all_dag_ids = sorted(set(orm_dags.keys()) | set(webserver_dags.keys()))
+        start = (current_page - 1) * dags_per_page
+        end = current_page * dags_per_page
+        all_dag_ids = sorted(set(orm_dags.keys())
+                             | set(webserver_dags.keys()))
+
+        num_of_all_dags = len(all_dag_ids)
+        num_of_pages = int(math.ceil(len(all_dag_ids) / float(dags_per_page)))
+
         return self.render(
             'airflow/dags.html',
+            current_page=current_page,
+            page_size=dags_per_page,
+            num_of_pages=num_of_pages,
+            num_dag_from=start + 1,
+            num_dag_to=min(end, num_of_all_dags),
+            num_of_all_dags=num_of_all_dags,
             webserver_dags=webserver_dags,
             orm_dags=orm_dags,
             hide_paused=hide_paused,
-            all_dag_ids=all_dag_ids)
+            dag_ids_in_page=all_dag_ids[start:end])
 
 
 class QueryView(wwwutils.DataProfilingMixin, BaseView):

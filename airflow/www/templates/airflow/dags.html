@@ -29,11 +29,25 @@
   <h2>DAGs</h2>
 
   <div id="main_content" style="display:none;">
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="dataTables_length" id="dags_length">
+          <label>Show <select id="page_size" name="dags_length" aria-controls="dags" class="form-control input-sm">
+            <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
+            <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
+            <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
+            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option></select> entries
+          </label>
+        </div>
+      </div>
+      <div class="col-sm-6">
+      </div>
+    </div>
     <table id="dags" class="table table-striped table-bordered">
         <thead>
             <tr>
                 <th></th>
-                <th width="12"><span id="pause_header"class="glyphicon glyphicon-info-sign" title="Use this toggle to pause a DAG. The scheduler won't schedule new tasks instances for a paused DAG. Tasks already running at pause time won't be affected."></span></th>
+                <th width="12"><span id="pause_header" class="glyphicon glyphicon-info-sign" title="Use this toggle to pause a DAG. The scheduler won't schedule new tasks instances for a paused DAG. Tasks already running at pause time won't be affected."></span></th>
                 <th>DAG</th>
                 <th>Schedule</th>
                 <th>Owner</th>
@@ -51,7 +65,7 @@
             </tr>
         </thead>
         <tbody>
-        {% for dag_id in all_dag_ids %}
+        {% for dag_id in dag_ids_in_page %}
             {% set dag = webserver_dags[dag_id] if dag_id in webserver_dags else None %}
             <tr>
                 <!-- Column 1: Edit dag -->
@@ -174,6 +188,30 @@
         {% endfor %}
         </tbody>
     </table>
+    <div class="row">
+      <div class="col-sm-5">
+        <div class="dataTables_info" id="dags_info" role="status" aria-live="polite">Showing {{num_dag_from}} to {{num_dag_to}} of {{num_of_all_dags}} entries</div>
+      </div>
+      <div class="col-sm-7">
+        <div class="dataTables_paginate paging_simple_numbers" id="dags_paginate">
+          <ul class="pagination">
+            {% if current_page > 1 %}
+            <li class="paginate_button previous" id="dags_previous"><a href="?page_size={{page_size}}&page={{current_page - 1}}" aria-controls="dags" data-dt-idx="0" tabindex="0">Previous</a></li>
+            {% endif %}
+            {% for page_num in range(1, num_of_pages + 1) %}
+            {% if page_num == current_page %}
+            <li class="paginate_button active"><a href="?page_size={{page_size}}&page={{page_num}}" aria-controls="dags" data-dt-idx="1" tabindex="0">{{page_num}}</a></li>
+            {% else %}
+            <li class="paginate_button "><a href="?page_size={{page_size}}&page={{page_num}}" aria-controls="dags" data-dt-idx="2" tabindex="0">{{page_num}}</a></li>
+            {% endif %}
+            {% endfor %}
+            {% if current_page < num_of_pages %}
+            <li class="paginate_button next" id="dags_next"><a href="?page_size={{page_size}}&page={{current_page + 1}}" aria-controls="dags" data-dt-idx="3" tabindex="0">Next</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
     {% if not hide_paused %}
     <a href="/admin/?showPaused=False">Hide Paused DAGs</a>
     {% else %}
@@ -188,6 +226,11 @@
   <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bootstrap-toggle.min.js') }}"></script>
   <script>
+
+      $('#page_size').on('change', function() {
+        p_size = $(this).val();
+        window.location = "/admin/?page_size=" + p_size;
+      });
 
       function confirmTriggerDag(dag_id){
           return confirm("Are you sure you want to run '"+dag_id+"' now?");
@@ -208,7 +251,10 @@
       $('#dags').dataTable({
         "iDisplayLength": 500,
         "bSort": false,
-        "pageLength": 25,
+        "searching": false,
+        "ordering": false,
+        "paging": false,
+        "info": false
       });
       $("#main_content").show(250);
       diameter = 25;
