@@ -31,16 +31,11 @@
   <div id="main_content" style="display:none;">
     <div class="row">
       <div class="col-sm-6">
-        <div class="dataTables_length" id="dags_length">
-          <label>Show <select id="page_size" name="dags_length" aria-controls="dags" class="form-control input-sm">
-            <option value="10" {% if page_size == 10 %}selected{% endif %}>10</option>
-            <option value="25" {% if page_size == 25 %}selected{% endif %}>25</option>
-            <option value="50" {% if page_size == 50 %}selected{% endif %}>50</option>
-            <option value="100" {% if page_size == 100 %}selected{% endif %}>100</option></select> entries
-          </label>
-        </div>
       </div>
       <div class="col-sm-6">
+        <div id="dags_filter" class="dataTables_filter">
+          <label for="dag_query">Search:<input id="dag_query" type="search" class="form-control" placeholder="" value="{{search_query}}"/></label>
+        </div>
       </div>
     </div>
     <table id="dags" class="table table-striped table-bordered">
@@ -226,6 +221,13 @@
   <script src="{{ url_for('static', filename='jquery.dataTables.min.js') }}"></script>
   <script src="{{ url_for('static', filename='bootstrap-toggle.min.js') }}"></script>
   <script>
+
+      $('#dag_query').on('keypress', function (e) {
+        if (e.which === 13) {
+          search_query = $('#dag_query').val();
+          window.location = "/admin/?search="+ encodeURI(search_query);
+        }
+      });
 
       $('#page_size').on('change', function() {
         p_size = $(this).val();

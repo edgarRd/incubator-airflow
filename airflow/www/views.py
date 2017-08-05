@@ -1888,45 +1888,49 @@ class HomeView(AdminIndexView):
             except ValueError:
                 return default
 
-        arg_page_size = request.args.get('page_size', '25')
-        arg_current_page = request.args.get('page', '1')
+        arg_current_page = request.args.get('page', '0')
+        arg_search_query = request.args.get('search', '')
 
-        current_page = get_int_arg(arg_current_page, default=1)
-        dags_per_page = get_int_arg(arg_page_size, default=25)
+        dags_per_page = PAGE_SIZE
+        current_page = get_int_arg(arg_current_page, default=0)
+
         if show_paused_arg.strip().lower() == 'false':
             hide_paused = True
-
         elif show_paused_arg.strip().lower() == 'true':
             hide_paused = False
-
         else:
             hide_paused = hide_paused_dags_by_default
 
         # read orm_dags from the db
-        qry = session.query(DM)
-        qry_fltr = []
+        sql_query = session.query(DM)
 
         if do_filter and owner_mode == 'ldapgroup':
-            qry_fltr = qry.filter(
-                ~DM.is_subdag, DM.is_active,
+            sql_query = sql_query.filter(
+                ~DM.is_subdag,
+                DM.is_active,
                 DM.owners.in_(current_user.ldap_groups)
-            ).all()
+            )
         elif do_filter and owner_mode == 'user':
-            qry_fltr = qry.filter(
+            sql_query = sql_query.filter(
                 ~DM.is_subdag, DM.is_active,
                 DM.owners == current_user.user.username
-            ).all()
+            )
         else:
-            qry_fltr = qry.filter(
+            sql_query = sql_query.filter(
                 ~DM.is_subdag, DM.is_active
-            ).all()
+            )
+
+        if arg_search_query is not None and len(arg_search_query):
+            sql_query = sql_query.filter(
+                or_(DM.owners.ilike('%{}%'.format(arg_search_query)),
+                    DM.dag_id.ilike('%{}%'.format(arg_search_query)))
+            )
 
         # optionally filter out "paused" dags
         if hide_paused:
-            orm_dags = {dag.dag_id: dag for dag in qry_fltr if not dag.is_paused}
+            sql_query = sql_query.filter(~DM.is_paused)
 
-        else:
-            orm_dags = {dag.dag_id: dag for dag in qry_fltr}
+        orm_dags = {dag.dag_id: dag for dag in sql_query.all()}
 
         import_errors = session.query(models.ImportError).all()
         for ie in import_errors:
@@ -1968,10 +1972,22 @@ class HomeView(AdminIndexView):
                 for dag in unfiltered_webserver_dags
             }
 
-        start = (current_page - 1) * dags_per_page
-        end = current_page * dags_per_page
+        if arg_search_query:
+            lower_search_query = arg_search_query.lower()
+            # filter by dag_id
+            webserver_dags_filtered = {
+                dag_id: dag
+                for dag_id, dag in webserver_dags.items()
+                if (lower_search_query in dag_id.lower() or
+                    lower_search_query in dag.owner.lower())
+            }
+        else:
+            webserver_dags_filtered = webserver_dags
+
+        start = current_page * dags_per_page
+        end = (current_page + 1) * dags_per_page
         all_dag_ids = sorted(set(orm_dags.keys())
-                             | set(webserver_dags.keys()))
+                             | set(webserver_dags_filtered.keys()))
 
         num_of_all_dags = len(all_dag_ids)
         num_of_pages = int(math.ceil(len(all_dag_ids) / float(dags_per_page)))
@@ -1979,12 +1995,13 @@ class HomeView(AdminIndexView):
         return self.render(
             'airflow/dags.html',
             current_page=current_page,
+            search_query=arg_search_query,
             page_size=dags_per_page,
             num_of_pages=num_of_pages,
             num_dag_from=start + 1,
             num_dag_to=min(end, num_of_all_dags),
             num_of_all_dags=num_of_all_dags,
-            webserver_dags=webserver_dags,
+            webserver_dags=webserver_dags_filtered,
             orm_dags=orm_dags,
             hide_paused=hide_paused,
             dag_ids_in_page=all_dag_ids[start:end])
