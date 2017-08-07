@@ -2079,6 +2079,7 @@ class AirflowModelView(ModelView):
     create_template = 'airflow/model_create.html'
     column_display_actions = True
     page_size = PAGE_SIZE
+    simple_list_pager = True
 
 
 class ModelViewOnly(wwwutils.LoginMixin, AirflowModelView):
@@ -2546,6 +2547,7 @@ class TaskInstanceModelView(ModelViewOnly):
         'pool', 'log_url')
     can_delete = True
     page_size = PAGE_SIZE
+    simple_list_pager = True
 
     @action('set_running', "Set state to 'running'", None)
     def action_set_running(self, ids):
@@ -2814,6 +2816,7 @@ class DagModelView(wwwutils.SuperUserMixin, ModelView):
     page_size = PAGE_SIZE
     list_template = 'airflow/list_dags.html'
     named_filter_urls = True
+    simple_list_pager = True
 
     def get_query(self):
         """
