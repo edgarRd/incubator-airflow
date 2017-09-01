@@ -205,11 +205,23 @@
           $.post(url);
         });
       });
-      $('#dags').dataTable({
-        "iDisplayLength": 500,
+
+      // Default page sizes for DataTable plugin
+      var pageSizes = [ 10, 25, 50, 75, 100 ]
+      // Page size coming from the server
+      var serverPageSize = {{page_size}}
+      if (pageSizes.indexOf(serverPageSize) === -1) {
+        pageSizes.push(serverPageSize)
+      }
+
+      $('#dags').DataTable({
         "bSort": false,
-        "pageLength": 25,
+        "lengthMenu": pageSizes.sort(function(a, b) {
+          return a - b;
+        }),
+        "pageLength": serverPageSize,
       });
+
       $("#main_content").show(250);
       diameter = 25;
       circle_margin = 4;

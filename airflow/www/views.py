@@ -1893,7 +1893,8 @@ class HomeView(AdminIndexView):
             webserver_dags=webserver_dags,
             orm_dags=orm_dags,
             hide_paused=hide_paused,
-            all_dag_ids=all_dag_ids)
+            all_dag_ids=all_dag_ids,
+            page_size=PAGE_SIZE)
 
 
 class QueryView(wwwutils.DataProfilingMixin, BaseView):
