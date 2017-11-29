@@ -99,6 +99,7 @@ install:
   - pip install --upgrade pip
   - pip install tox
   - pip install codecov
+  - pip install flake8
 before_script:
   - mysql -e 'drop database if exists airflow; create database airflow' -u root
   - psql -c 'create database airflow;' -U postgres
@@ -107,6 +108,7 @@ script:
   - pip --version
   - ls -l $HOME/.wheelhouse
   - tox --version
+  - ./run_pep8_checks.sh
   - tox -e $TOX_ENV
 after_success:
   - codecov
