@@ -13,6 +13,7 @@
 # limitations under the License.
 # from __future__ import print_function
 import errno
+import sys
 import os
 import subprocess
 import unittest
@@ -76,6 +77,8 @@ class ImpersonationTest(unittest.TestCase):
                      dags_folder=TEST_DAG_FOLDER):
 
         def backfill_trigger(test_dags_dir):
+            # This process should be able to load the DagBag since it will inherit the
+            # PYTHONPATH
             dags = get_dagbag(dags_folder=test_dags_dir)
             dag = dags.get_dag(dag_id)
             dag.clear()
@@ -90,19 +93,13 @@ class ImpersonationTest(unittest.TestCase):
         p.start()
         p.join()
 
-        def fetch_state_check(dags_dir, dagid, taskid, q):
-            dag = get_dagbag(dags_folder=dags_dir).get_dag(dagid)
-            ti = models.TaskInstance(
-                task=dag.get_task(taskid),
-                execution_date=DEFAULT_DATE)
-            ti.refresh_from_db()
-            q.put(ti.state)
+        dag = get_dagbag(dags_folder=dags_folder).get_dag(dag_id)
+        ti = models.TaskInstance(
+            task=dag.get_task(task_id),
+            execution_date=DEFAULT_DATE)
+        ti.refresh_from_db()
 
-        pq = Queue()
-        pc = Process(target=fetch_state_check, args=(dags_folder, dag_id, task_id, pq))
-        pc.start()
-        self.assertEqual(pq.get(), State.SUCCESS)
-        pc.join()
+        self.assertEqual(ti.state, State.SUCCESS)
 
     def test_impersonation(self):
         """
@@ -144,11 +141,14 @@ class ImpersonationTest(unittest.TestCase):
         PYTHONPATH
         """
         original_pypath = os.environ.get('PYTHONPATH', '')
-        os.environ['PYTHONPATH'] = os.path.join(
+        custom_contrib = os.path.join(
             os.path.abspath(os.path.dirname(tests.__file__)), 'contrib')
+        os.environ['PYTHONPATH'] = custom_contrib
         if original_pypath:
             os.environ['PYTHONPATH'] += ':' + original_pypath
 
+        # Add custom contrib to sys.path to be able to load the DagBag
+        sys.path.append(custom_contrib)
         logger.info('Setting PYTHONPATH={}'.format(os.environ['PYTHONPATH']))
         try:
             self.run_backfill(
