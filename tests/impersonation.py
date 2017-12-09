@@ -21,6 +21,9 @@ from airflow import jobs, models
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
 
+import tests
+
+
 DEV_NULL = '/dev/null'
 TEST_DAG_FOLDER = os.path.join(
     os.path.dirname(os.path.realpath(__file__)), 'dags')
@@ -109,3 +112,23 @@ class ImpersonationTest(unittest.TestCase):
             )
         finally:
             del os.environ['AIRFLOW__CORE__DEFAULT_IMPERSONATION']
+
+    def test_impersonation_custom(self):
+        """
+        Tests that impersonation using a unix user works with custom packages in
+        PYTHONPATH
+        """
+        original_pypath = os.environ.get('PYTHONPATH', '')
+        os.environ['PYTHONPATH'] = os.path.join(
+            os.path.abspath(os.path.dirname(tests.__file__)), 'contrib')
+        if original_pypath:
+            os.environ['PYTHONPATH'] += ':'+ original_pypath
+
+        try:
+            self.run_backfill(
+                'test_impersonation_custom',
+                'call_custom_package'
+            )
+        finally:
+            os.environ['PYTHONPATH'] = original_pypath
+
