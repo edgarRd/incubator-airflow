@@ -18,6 +18,8 @@ import subprocess
 import unittest
 import logging
 
+from multiprocessing import Process
+
 from airflow import jobs, models
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
@@ -67,14 +69,26 @@ class ImpersonationTest(unittest.TestCase):
         subprocess.check_output(['sudo', 'userdel', '-r', TEST_USER])
 
     def run_backfill(self, dag_id, task_id):
+        def backfill_trigger():
+            dags = models.DagBag(
+                dag_folder=TEST_DAG_FOLDER,
+                include_examples=False,
+            )
+
+            dag = dags.get_dag(dag_id)
+            dag.clear()
+
+            jobs.BackfillJob(
+                dag=dag,
+                start_date=DEFAULT_DATE,
+                end_date=DEFAULT_DATE).run()
+
+        # spawn new processes to inherit modified env variables
+        p = Process(target=backfill_trigger)
+        p.start()
+        p.join()
+
         dag = self.dagbag.get_dag(dag_id)
-        dag.clear()
-
-        jobs.BackfillJob(
-            dag=dag,
-            start_date=DEFAULT_DATE,
-            end_date=DEFAULT_DATE).run()
-
         ti = models.TaskInstance(
             task=dag.get_task(task_id),
             execution_date=DEFAULT_DATE)
