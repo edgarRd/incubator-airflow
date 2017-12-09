@@ -33,7 +33,7 @@ run_as_user = 'airflow_test_user'
 
 
 def print_today():
-    print 'Today is {}'.format(today())
+    print('Today is {}'.format(today()))
 
 
 pytask = PythonOperator(
