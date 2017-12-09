@@ -90,8 +90,8 @@ class ImpersonationTest(unittest.TestCase):
         p.start()
         p.join()
 
-        def fetch_state_check(test_dags_dir, dagid, taskid, q):
-            dag = get_dagbag(dags_folder=test_dags_dir).get_dag(dagid)
+        def fetch_state_check(dags_dir, dagid, taskid, q):
+            dag = get_dagbag(dags_folder=dags_dir).get_dag(dagid)
             ti = models.TaskInstance(
                 task=dag.get_task(taskid),
                 execution_date=DEFAULT_DATE)
@@ -138,7 +138,7 @@ class ImpersonationTest(unittest.TestCase):
         finally:
             del os.environ['AIRFLOW__CORE__DEFAULT_IMPERSONATION']
 
-    def xtest_impersonation_custom(self):
+    def test_impersonation_custom(self):
         """
         Tests that impersonation using a unix user works with custom packages in
         PYTHONPATH
