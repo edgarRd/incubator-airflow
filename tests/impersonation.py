@@ -79,6 +79,7 @@ class ImpersonationTest(unittest.TestCase):
         def backfill_trigger(test_dags_dir):
             # This process should be able to load the DagBag since it will inherit the
             # PYTHONPATH
+            sys.path.append(os.path.join(PWD, 'contrib'))
             dags = get_dagbag(dags_folder=test_dags_dir)
             dag = dags.get_dag(dag_id)
             dag.clear()
@@ -141,14 +142,12 @@ class ImpersonationTest(unittest.TestCase):
         PYTHONPATH
         """
         original_pypath = os.environ.get('PYTHONPATH', '')
-        custom_contrib = os.path.join(
-            os.path.abspath(os.path.dirname(tests.__file__)), 'contrib')
+        custom_contrib = os.path.join(PWD, 'contrib')
         os.environ['PYTHONPATH'] = custom_contrib
         if original_pypath:
             os.environ['PYTHONPATH'] += ':' + original_pypath
 
         # Add custom contrib to sys.path to be able to load the DagBag
-        sys.path.append(custom_contrib)
         logger.info('Setting PYTHONPATH={}'.format(os.environ['PYTHONPATH']))
         try:
             self.run_backfill(
