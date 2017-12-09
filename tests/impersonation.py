@@ -16,6 +16,7 @@ import errno
 import os
 import subprocess
 import unittest
+import logging
 
 from airflow import jobs, models
 from airflow.utils.state import State
@@ -30,6 +31,7 @@ TEST_DAG_FOLDER = os.path.join(
 DEFAULT_DATE = datetime(2015, 1, 1)
 TEST_USER = 'airflow_test_user'
 
+logger = logging.getLogger(__name__)
 
 # TODO(aoen): Adding/remove a user as part of a test is very bad (especially if the user
 # already existed to begin with on the OS), this logic should be moved into a test
@@ -124,6 +126,7 @@ class ImpersonationTest(unittest.TestCase):
         if original_pypath:
             os.environ['PYTHONPATH'] += ':'+ original_pypath
 
+        logger.info('Setting PYTHONPATH={}'.format(os.environ['PYTHONPATH']))
         try:
             self.run_backfill(
                 'test_impersonation_custom',
