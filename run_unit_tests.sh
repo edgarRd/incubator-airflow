@@ -26,7 +26,8 @@ export AIRFLOW__TESTSECTION__TESTKEY=testvalue
 export AIRFLOW_USE_NEW_IMPORTS=1
 
 # add test/contrib to PYTHONPATH
-export PYTHONPATH='tests/contrib'
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export PYTHONPATH=$PYTHONPATH:${DIR}/tests/contrib
 
 # any argument received is overriding the default nose execution arguments:
 
