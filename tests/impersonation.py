@@ -66,10 +66,13 @@ class ImpersonationTest(unittest.TestCase):
                      dags_dir=TEST_DAG_FOLDER):
 
         logger.info('Reading from DAG folder {}'.format(dags_dir))
-        dags = models.DagBag(
+        dagbag = models.DagBag(
             dag_folder=dags_dir,
             include_examples=False)
-        dag = dags.get_dag(dag_id)
+        logger.info('Loaded DAGS:')
+        logger.info(dagbag.dagbag_report())
+
+        dag = dagbag.get_dag(dag_id)
         dag.clear()
 
         jobs.BackfillJob(
