@@ -128,6 +128,5 @@ class ImpersonationTest(unittest.TestCase):
 
         self.run_backfill(
             'test_impersonation_custom',
-            'call_custom_package',
-            dags_dir=os.path.join(PWD, 'dags_with_custom_pkgs')
+            'call_custom_package'
         )
