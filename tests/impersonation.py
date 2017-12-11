@@ -13,13 +13,11 @@
 # limitations under the License.
 # from __future__ import print_function
 import errno
-import sys
 import os
 import subprocess
 import unittest
 import logging
 
-from multiprocessing import Process
 
 from airflow import jobs, models
 from airflow.utils.state import State
@@ -40,13 +38,6 @@ logger = logging.getLogger(__name__)
 # When this is done we can also modify the sudoers file to ensure that useradd will work
 # without any manual modification of the sudoers file by the agent that is running these
 # tests.
-
-
-def get_dagbag(dags_folder=TEST_DAG_FOLDER):
-    return models.DagBag(
-        dag_folder=TEST_DAG_FOLDER,
-        include_examples=False,
-    )
 
 
 class ImpersonationTest(unittest.TestCase):
@@ -74,7 +65,10 @@ class ImpersonationTest(unittest.TestCase):
     def run_backfill(self, dag_id, task_id,
                      dags_dir=TEST_DAG_FOLDER):
 
-        dags = get_dagbag(dags_folder=dags_dir)
+        logger.info('Reading from DAG folder {}'.format(dags_dir))
+        dags = models.DagBag(
+            dag_folder=dags_dir,
+            include_examples=False)
         dag = dags.get_dag(dag_id)
         dag.clear()
 
