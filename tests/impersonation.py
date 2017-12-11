@@ -19,13 +19,11 @@ import subprocess
 import unittest
 import logging
 
-from multiprocessing import Process, Queue
+from multiprocessing import Process
 
 from airflow import jobs, models
 from airflow.utils.state import State
 from airflow.utils.timezone import datetime
-
-import tests
 
 
 DEV_NULL = '/dev/null'
@@ -74,27 +72,17 @@ class ImpersonationTest(unittest.TestCase):
         subprocess.check_output(['sudo', 'userdel', '-r', TEST_USER])
 
     def run_backfill(self, dag_id, task_id,
-                     dags_folder=TEST_DAG_FOLDER):
+                     dags_dir=TEST_DAG_FOLDER):
 
-        def backfill_trigger(test_dags_dir):
-            # This process should be able to load the DagBag since it will inherit the
-            # PYTHONPATH
-            sys.path.append(os.path.join(PWD, 'contrib'))
-            dags = get_dagbag(dags_folder=test_dags_dir)
-            dag = dags.get_dag(dag_id)
-            dag.clear()
+        dags = get_dagbag(dags_folder=dags_dir)
+        dag = dags.get_dag(dag_id)
+        dag.clear()
 
-            jobs.BackfillJob(
-                dag=dag,
-                start_date=DEFAULT_DATE,
-                end_date=DEFAULT_DATE).run()
+        jobs.BackfillJob(
+            dag=dag,
+            start_date=DEFAULT_DATE,
+            end_date=DEFAULT_DATE).run()
 
-        # spawn new processes to inherit modified env variables
-        p = Process(target=backfill_trigger, args=(dags_folder,))
-        p.start()
-        p.join()
-
-        dag = get_dagbag(dags_folder=dags_folder).get_dag(dag_id)
         ti = models.TaskInstance(
             task=dag.get_task(task_id),
             execution_date=DEFAULT_DATE)
@@ -147,5 +135,5 @@ class ImpersonationTest(unittest.TestCase):
         self.run_backfill(
             'test_impersonation_custom',
             'call_custom_package',
-            dags_folder=os.path.join(PWD, 'dags_with_custom_pkgs')
+            dags_dir=os.path.join(PWD, 'dags_with_custom_pkgs')
         )
