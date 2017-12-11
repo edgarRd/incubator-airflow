@@ -141,19 +141,11 @@ class ImpersonationTest(unittest.TestCase):
         Tests that impersonation using a unix user works with custom packages in
         PYTHONPATH
         """
-        original_pypath = os.environ.get('PYTHONPATH', '')
-        custom_contrib = os.path.join(PWD, 'contrib')
-        os.environ['PYTHONPATH'] = custom_contrib
-        if original_pypath:
-            os.environ['PYTHONPATH'] += ':' + original_pypath
+        # PYTHONPATH is already set in script triggering tests
+        assert 'PYTHONPATH' in os.environ
 
-        # Add custom contrib to sys.path to be able to load the DagBag
-        logger.info('Setting PYTHONPATH={}'.format(os.environ['PYTHONPATH']))
-        try:
-            self.run_backfill(
-                'test_impersonation_custom',
-                'call_custom_package',
-                dags_folder=os.path.join(PWD, 'dags_with_custom_pkgs')
-            )
-        finally:
-            os.environ['PYTHONPATH'] = original_pypath
+        self.run_backfill(
+            'test_impersonation_custom',
+            'call_custom_package',
+            dags_folder=os.path.join(PWD, 'dags_with_custom_pkgs')
+        )

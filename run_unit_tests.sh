@@ -25,6 +25,9 @@ export AIRFLOW__TESTSECTION__TESTKEY=testvalue
 # use Airflow 2.0-style imports
 export AIRFLOW_USE_NEW_IMPORTS=1
 
+# add test/contrib to PYTHONPATH
+export PYTHONPATH='tests/contrib'
+
 # any argument received is overriding the default nose execution arguments:
 
 nose_args=$@
