@@ -17,7 +17,7 @@ from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 
 # access custom python path
-from contrib.utils.test_custom import today
+from contrib.utils import custom
 
 
 DEFAULT_DATE = datetime(2016, 1, 1)
@@ -25,19 +25,17 @@ DEFAULT_DATE = datetime(2016, 1, 1)
 args = {
     'owner': 'airflow',
     'start_date': DEFAULT_DATE,
+    'run_as_user': 'airflow_test_user'
 }
 
-dag = DAG(dag_id='test_impersonation_custom', default_args=args)
-
-run_as_user = 'airflow_test_user'
+dag = DAG(dag_id='impersonation_with_custom_pkg', default_args=args)
 
 
 def print_today():
-    print('Today is {}'.format(today()))
+    print('Today is {}'.format(custom.today()))
 
 
-pytask = PythonOperator(
+PythonOperator(
     python_callable=print_today,
-    task_id='call_custom_package',
-    dag=dag,
-    run_as_user=run_as_user)
+    task_id='exec_python_fn',
+    dag=dag)

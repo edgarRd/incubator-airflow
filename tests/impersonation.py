@@ -130,6 +130,6 @@ class ImpersonationTest(unittest.TestCase):
         assert 'PYTHONPATH' in os.environ
 
         self.run_backfill(
-            'test_impersonation_custom',
-            'call_custom_package'
+            'impersonation_with_custom_pkg',
+            'exec_python_fn'
         )
