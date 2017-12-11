@@ -17,7 +17,7 @@ from airflow.operators.python_operator import PythonOperator
 from datetime import datetime
 
 # access custom python path
-from contrib.utils import custom
+from tests.contrib.utils import custom
 
 
 DEFAULT_DATE = datetime(2016, 1, 1)
