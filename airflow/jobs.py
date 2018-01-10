@@ -1915,6 +1915,7 @@ class BackfillJob(BaseJob):
             ignore_task_deps=False,
             pool=None,
             delay_on_limit_secs=1.0,
+            cfg_path=None,
             *args, **kwargs):
         self.dag = dag
         self.dag_id = dag.dag_id
@@ -1927,6 +1928,7 @@ class BackfillJob(BaseJob):
         self.ignore_task_deps = ignore_task_deps
         self.pool = pool
         self.delay_on_limit_secs = delay_on_limit_secs
+        self.cfg_path = cfg_path
         super(BackfillJob, self).__init__(*args, **kwargs)
 
     def _update_counters(self, ti_status):
@@ -2225,8 +2227,8 @@ class BackfillJob(BaseJob):
                         if ti.state == State.SCHEDULED or ti.state == State.UP_FOR_RETRY:
                             if executor.has_task(ti):
                                 self.log.debug(
-                                    "Task Instance %s already in executor waiting for queue to clear",
-                                    ti
+                                    "Task Instance %s already in executor waiting for " +
+                                    "queue to clear", ti
                                 )
                             else:
                                 self.log.debug('Sending %s to executor', ti)
@@ -2239,7 +2241,8 @@ class BackfillJob(BaseJob):
                                     pickle_id=pickle_id,
                                     ignore_task_deps=self.ignore_task_deps,
                                     ignore_depends_on_past=ignore_depends_on_past,
-                                    pool=self.pool)
+                                    pool=self.pool,
+                                    cfg_path=self.cfg_path)
                                 ti_status.started[key] = ti
                                 ti_status.to_run.pop(key)
                         session.commit()
@@ -2311,7 +2314,7 @@ class BackfillJob(BaseJob):
         if ti_status.failed:
             err += (
                 "---------------------------------------------------\n"
-                "Some task instances failed:\n%s\n".format(ti_status.failed))
+                "Some task instances failed:\n{}\n".format(ti_status.failed))
         if ti_status.deadlocked:
             err += (
                 '---------------------------------------------------\n'
