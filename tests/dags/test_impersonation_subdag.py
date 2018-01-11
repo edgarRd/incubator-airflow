@@ -21,8 +21,6 @@ from airflow.operators.bash_operator import BashOperator
 from airflow.executors import SequentialExecutor
 
 
-from tests.test_utils.fake_datetime import FakeDatetime
-
 DEFAULT_DATE = datetime(2016, 1, 1)
 
 default_args = {
@@ -35,17 +33,18 @@ dag = DAG(dag_id='impersonation_subdag', default_args=default_args)
 
 
 def print_today():
-    dt = FakeDatetime.utcnow()
-    print('Today is {}'.format(dt.strftime('%Y-%m-%d')))
+    print('Today is {}'.format(datetime.utcnow()))
 
 
 subdag = DAG('impersonation_subdag.test_subdag_operation',
              default_args=default_args)
 
+
 PythonOperator(
     python_callable=print_today,
     task_id='exec_python_fn',
     dag=subdag)
+
 
 BashOperator(
     task_id='exec_bash_operator',

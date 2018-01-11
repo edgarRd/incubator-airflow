@@ -11,13 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import subprocess
-
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Pool
 from airflow.utils.decorators import apply_defaults
 from airflow.utils.db import provide_session
-from airflow.utils.configuration import configuration_subset, MAIN_SECTIONS
 from airflow.executors import GetDefaultExecutor
 
 
@@ -89,16 +86,7 @@ class SubDagOperator(BaseOperator):
 
     def execute(self, context):
         ed = context['execution_date']
-
-        self.logger.info('Running subdag operator')
-
-        # make a copy of the defaults configuration into a temp file to guarantee that
-        # tasks within the subdag have access to the same configuration
-        self.logger.info('using configuration file: {}'.format(self.cfg_path))
-        try:
-            cfg_path = configuration_subset(MAIN_SECTIONS)
-            self.subdag.run(
-                start_date=ed, end_date=ed, donot_pickle=True,
-                executor=self.executor, cfg_path=cfg_path)
-        finally:
-            subprocess.call(['rm', cfg_path], close_fds=True)
+        self.subdag.run(
+            start_date=ed, end_date=ed, donot_pickle=True,
+            executor=self.executor,
+            copy_config=bool(self.run_as_user))

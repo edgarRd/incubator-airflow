@@ -16,17 +16,18 @@ from __future__ import absolute_import
 
 import os
 import json
-
-from airflow import configuration as conf
 from tempfile import mkstemp
 
-
-MAIN_SECTIONS = [
-    'core', 'smtp', 'scheduler', 'webserver', 'hive'
-]
+from airflow import configuration as conf
 
 
-def __write_tmp_config(cfg_dict):
+def tmp_configuration_copy():
+    """
+    Returns a path for a temporary file including a full copy of the configuration
+    settings.
+    :return: a path to a temporary file
+    """
+    cfg_dict = conf.as_dict(display_sensitive=True)
     temp_fd, cfg_path = mkstemp()
 
     with os.fdopen(temp_fd, 'w') as temp_file:
@@ -34,27 +35,3 @@ def __write_tmp_config(cfg_dict):
 
     return cfg_path
 
-
-def tmp_copy_configuration():
-    """
-    Creates a temporary file with the full copy of the configuration file. This context
-    manager will remove the temporary file created on closing.
-    :return: a path to the temp file with the copy of the configuration
-    :type: string
-    """
-    return __write_tmp_config(conf.as_dict(display_sensitive=True))
-
-
-def configuration_subset(sections):
-    """
-    Creates a temporary file with a subset of the configuration specified by the sections
-    in the parameters, copy only those sections and returning a path for the temp file.
-    :return: a path to the temp file with the configuration subset.
-    :type: string
-    """
-    cfg_subset = dict()
-    cfg_dict = conf.as_dict(display_sensitive=True)
-    for section in sections:
-        cfg_subset[section] = cfg_dict.get(section, {})
-
-    return __write_tmp_config(cfg_subset)

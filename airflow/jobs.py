@@ -58,6 +58,7 @@ from airflow.utils.db import create_session, provide_session
 from airflow.utils.email import send_email
 from airflow.utils.log.logging_mixin import LoggingMixin, set_context, StreamLogWriter
 from airflow.utils.state import State
+from airflow.utils.configuration import tmp_configuration_copy
 
 Base = models.Base
 ID_LEN = models.ID_LEN
@@ -1915,7 +1916,7 @@ class BackfillJob(BaseJob):
             ignore_task_deps=False,
             pool=None,
             delay_on_limit_secs=1.0,
-            cfg_path=None,
+            copy_config=None,
             *args, **kwargs):
         self.dag = dag
         self.dag_id = dag.dag_id
@@ -1928,7 +1929,7 @@ class BackfillJob(BaseJob):
         self.ignore_task_deps = ignore_task_deps
         self.pool = pool
         self.delay_on_limit_secs = delay_on_limit_secs
-        self.cfg_path = cfg_path
+        self.copy_config = copy_config
         super(BackfillJob, self).__init__(*args, **kwargs)
 
     def _update_counters(self, ti_status):
@@ -2235,6 +2236,13 @@ class BackfillJob(BaseJob):
                                 # Skip scheduled state, we are executing immediately
                                 ti.state = State.QUEUED
                                 session.merge(ti)
+
+                                cfg_path = None
+                                if self.copy_config:
+                                    # no need to clean, airflow run cli removes the file:
+                                    # see cli.py:342
+                                    cfg_path = tmp_configuration_copy()
+
                                 executor.queue_task_instance(
                                     ti,
                                     mark_success=self.mark_success,
@@ -2242,7 +2250,7 @@ class BackfillJob(BaseJob):
                                     ignore_task_deps=self.ignore_task_deps,
                                     ignore_depends_on_past=ignore_depends_on_past,
                                     pool=self.pool,
-                                    cfg_path=self.cfg_path)
+                                    cfg_path=cfg_path)
                                 ti_status.started[key] = ti
                                 ti_status.to_run.pop(key)
                         session.commit()
