@@ -11,8 +11,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-import subprocess
-
 from airflow.exceptions import AirflowException
 from airflow.models import BaseOperator, Pool
 from airflow.utils.decorators import apply_defaults
@@ -94,11 +92,8 @@ class SubDagOperator(BaseOperator):
 
         # make a copy of the defaults configuration into a temp file to guarantee that
         # tasks within the subdag have access to the same configuration
-        tmp_cfg_path = tmp_copy_configuration()
-        try:
+        with tmp_copy_configuration() as tmp_cfg_path:
             self.logger.info('using configuration file: {}'.format(tmp_cfg_path))
             self.subdag.run(
                 start_date=ed, end_date=ed, donot_pickle=True,
                 executor=self.executor, cfg_path=tmp_cfg_path)
-        finally:
-            subprocess.call(['rm', tmp_cfg_path], close_fds=True)

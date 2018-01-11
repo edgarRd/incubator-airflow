@@ -54,17 +54,8 @@ BashOperator(
 )
 
 
-class CheckConfigSubDagOperator(SubDagOperator):
-
-    """Sub Class of SubDagOperator to assert that the config path has correctly been
-    propagated, which gets created on pre_execute hook."""
-
-    def execute(self, context):
-        super(CheckConfigSubDagOperator, self).execute(context)
-
-
-subdag_operator = CheckConfigSubDagOperator(task_id='test_subdag_operation',
-                                            subdag=subdag,
-                                            executor=SequentialExecutor(),
-                                            dag=dag)
+subdag_operator = SubDagOperator(task_id='test_subdag_operation',
+                                 subdag=subdag,
+                                 executor=SequentialExecutor(),
+                                 dag=dag)
 
