@@ -92,10 +92,8 @@ class SubDagOperator(BaseOperator):
 
         # make a copy of the defaults configuration into a temp file to guarantee that
         # tasks within the subdag have access to the same configuration
-        # self.logger.info('using configuration file: {}'.format(tmp_cfg_path))
-        self.subdag.run(
-            start_date=ed, end_date=ed, donot_pickle=True,
-            executor=self.executor)
-
-        # # this string is used for introspection only
-        # self.used_tmp_cfg_path = tmp_cfg_path
+        with tmp_copy_configuration() as tmp_cfg_path:
+            self.logger.info('using configuration file: {}'.format(tmp_cfg_path))
+            self.subdag.run(
+                start_date=ed, end_date=ed, donot_pickle=True,
+                executor=self.executor, cfg_path=tmp_cfg_path)

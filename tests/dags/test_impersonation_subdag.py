@@ -42,6 +42,17 @@ def print_today():
 subdag = DAG('impersonation_subdag.test_subdag_operation',
              default_args=default_args)
 
+PythonOperator(
+    python_callable=print_today,
+    task_id='exec_python_fn',
+    dag=subdag)
+
+BashOperator(
+    task_id='exec_bash_operator',
+    bash_command='echo "Running within SubDag"',
+    dag=subdag
+)
+
 
 class CheckConfigSubDagOperator(SubDagOperator):
 
@@ -57,13 +68,3 @@ subdag_operator = CheckConfigSubDagOperator(task_id='test_subdag_operation',
                                             executor=SequentialExecutor(),
                                             dag=dag)
 
-PythonOperator(
-    python_callable=print_today,
-    task_id='exec_python_fn',
-    dag=subdag)
-
-BashOperator(
-    task_id='exec_bash_operator',
-    bash_command='echo "Running within SubDag"',
-    dag=subdag
-)
