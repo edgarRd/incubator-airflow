@@ -1916,7 +1916,6 @@ class BackfillJob(BaseJob):
             ignore_task_deps=False,
             pool=None,
             delay_on_limit_secs=1.0,
-            copy_config=None,
             *args, **kwargs):
         self.dag = dag
         self.dag_id = dag.dag_id
@@ -1929,7 +1928,6 @@ class BackfillJob(BaseJob):
         self.ignore_task_deps = ignore_task_deps
         self.pool = pool
         self.delay_on_limit_secs = delay_on_limit_secs
-        self.copy_config = copy_config
         super(BackfillJob, self).__init__(*args, **kwargs)
 
     def _update_counters(self, ti_status):
@@ -2237,14 +2235,8 @@ class BackfillJob(BaseJob):
                                 ti.state = State.QUEUED
                                 session.merge(ti)
 
-                                cfg_path = None
-                                if self.copy_config:
-                                    # no need to clean, airflow run cli removes the file:
-                                    # see cli.py:342
-                                    cfg_path = tmp_configuration_copy()
-                                    self.log.debug('Created temp config file {}'
-                                                   .format(cfg_path))
-
+                                # no need to clean temp file, airflow run cli removes
+                                # it, see cli.py:342
                                 executor.queue_task_instance(
                                     ti,
                                     mark_success=self.mark_success,
@@ -2252,7 +2244,7 @@ class BackfillJob(BaseJob):
                                     ignore_task_deps=self.ignore_task_deps,
                                     ignore_depends_on_past=ignore_depends_on_past,
                                     pool=self.pool,
-                                    cfg_path=cfg_path)
+                                    cfg_path=tmp_configuration_copy())
                                 ti_status.started[key] = ti
                                 ti_status.to_run.pop(key)
                         session.commit()

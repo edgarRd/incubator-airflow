@@ -3744,8 +3744,7 @@ class DAG(BaseDag, LoggingMixin):
             ignore_task_deps=False,
             ignore_first_depends_on_past=False,
             pool=None,
-            delay_on_limit_secs=1.0,
-            copy_config=False):
+            delay_on_limit_secs=1.0):
         """
         Runs the DAG.
 
@@ -3790,8 +3789,7 @@ class DAG(BaseDag, LoggingMixin):
             ignore_task_deps=ignore_task_deps,
             ignore_first_depends_on_past=ignore_first_depends_on_past,
             pool=pool,
-            delay_on_limit_secs=delay_on_limit_secs,
-            copy_config=copy_config)
+            delay_on_limit_secs=delay_on_limit_secs)
         job.run()
 
     def cli(self):
