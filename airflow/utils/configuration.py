@@ -16,7 +16,6 @@ from __future__ import absolute_import
 
 import os
 import json
-import subprocess
 
 from airflow import configuration as conf
 from tempfile import mkstemp
