@@ -50,8 +50,6 @@ class CheckConfigSubDagOperator(SubDagOperator):
 
     def execute(self, context):
         super(CheckConfigSubDagOperator, self).execute(context)
-        assert self.used_tmp_cfg_path and len(self.used_tmp_cfg_path) > 0, \
-            "cfg_path must be set!"
 
 
 subdag_operator = CheckConfigSubDagOperator(task_id='test_subdag_operation',
