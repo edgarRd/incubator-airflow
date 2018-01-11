@@ -16,7 +16,6 @@ from __future__ import absolute_import
 
 import os
 import json
-from contextlib import contextmanager
 
 from airflow import configuration as conf
 from tempfile import mkstemp
@@ -36,7 +35,6 @@ def __write_tmp_config(cfg_dict):
     return cfg_path
 
 
-@contextmanager
 def tmp_copy_configuration():
     """
     Creates a temporary file with the full copy of the configuration file. This context
@@ -44,13 +42,7 @@ def tmp_copy_configuration():
     :return: a path to the temp file with the copy of the configuration
     :type: string
     """
-    tmp_conf_path = None
-    try:
-        tmp_conf_path = __write_tmp_config(conf.as_dict(display_sensitive=True))
-        yield tmp_conf_path
-    finally:
-        if tmp_conf_path and os.path.isfile(tmp_conf_path):
-            os.remove(tmp_conf_path)
+    return __write_tmp_config(conf.as_dict(display_sensitive=True))
 
 
 def configuration_subset(sections):
