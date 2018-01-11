@@ -2242,6 +2242,8 @@ class BackfillJob(BaseJob):
                                     # no need to clean, airflow run cli removes the file:
                                     # see cli.py:342
                                     cfg_path = tmp_configuration_copy()
+                                    self.log.debug('Created temp config file {}'
+                                                   .format(cfg_path))
 
                                 executor.queue_task_instance(
                                     ti,
