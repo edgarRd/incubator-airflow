@@ -17,6 +17,7 @@ from datetime import datetime
 from airflow.models import DAG
 from airflow.operators.python_operator import PythonOperator
 from airflow.operators.subdag_operator import SubDagOperator
+from airflow.operators.bash_operator import BashOperator
 from airflow.executors import SequentialExecutor
 
 
@@ -62,3 +63,9 @@ PythonOperator(
     python_callable=print_today,
     task_id='exec_python_fn',
     dag=subdag)
+
+BashOperator(
+    task_id='exec_bash_operator',
+    bash_command='echo "Running within SubDag"',
+    dag=subdag
+)
